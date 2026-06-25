@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>عداء الدشداشة - Dishdasha Runner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d4aa;
+            --secondary: #1a1a2e;
+            --accent: #f4a261;
+            --dark: #0f0f1a;
+            --dark-surface: #16162a;
+            --dark-elevated: #1f1f3a;
+            --text: #ffffff;
+            --text-muted: #8888aa;
+            --sand: #e6c88a;
+            --sand-light: #f5deb3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 50%, #16213e 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 900px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 60%, #2d4a3e 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 40px rgba(0, 212, 170, 0.15),
+                0 10px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .score-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .score-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .score {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4aa 0%, #00a896 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .high-score-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .high-score-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .high-score {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--sand);
+        }
+
+        .start-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 15, 26, 0.97);
+            z-index: 20;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+
+        .start-screen.hidden, .game-over-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .game-logo {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .game-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4aa 0%, #f4a261 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .character-preview {
+            width: 70px;
+            height: 90px;
+            margin-bottom: 15px;
+            animation: run 0.6s ease-in-out infinite;
+        }
+
+        @keyframes run {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .controls-info {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .key-box {
+            width: 45px;
+            height: 45px;
+            background: var(--dark-elevated);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.2);
+        }
+
+        .key-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .start-btn, .restart-btn {
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 14px 45px;
+            background: linear-gradient(135deg, #ffffff 0%, #00a896 100%);
+            border: none;
+            border-radius: 50px;
+            color: var(--dark);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 25px rgba(0, 212, 170, 0.4);
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(0, 212, 170, 0.6);
+        }
+
+        .game-over-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .final-score-text {
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+
+        .final-score-text span {
+            color: var(--primary);
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .new-record {
+            font-size: 0.95rem;
+            color: var(--sand);
+            margin-bottom: 20px;
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            padding: 0 10px;
+        }
+
+        .mobile-btn {
+            flex: 1;
+            max-width: 140px;
+            height: 65px;
+            background: rgba(31, 31, 58, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            touch-action: manipulation;
+            user-select: none;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.2);
+        }
+
+        .mobile-btn:active, .mobile-btn.active {
+            background: var(--primary);
+            color: var(--dark);
+            transform: scale(0.95);
+            box-shadow: 0 2px 10px rgba(0, 212, 170, 0.4);
+        }
+
+        .mobile-btn span {
+            font-size: 0.7rem;
+            margin-left: 5px;
+            opacity: 0.8;
+        }
+
+        /* Mobile instructions */
+        .mobile-hint {
+            display: none;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                height: 280px;
+                border-radius: 15px;
+            }
+
+            .game-title {
+                font-size: 1.6rem;
+            }
+
+            .game-subtitle {
+                font-size: 0.75rem;
+            }
+
+            .controls-info {
+                display: none;
+            }
+
+            .mobile-controls {
+                display: flex;
+            }
+
+            .mobile-hint {
+                display: block;
+            }
+
+            .score {
+                font-size: 1.4rem;
+            }
+
+            .high-score {
+                font-size: 0.95rem;
+            }
+
+            .character-preview {
+                width: 55px;
+                height: 70px;
+            }
+
+            .start-btn, .restart-btn {
+                padding: 12px 35px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .game-container {
+                height: 250px;
+            }
+
+            .game-title {
+                font-size: 1.4rem;
+            }
+
+            .mobile-btn {
+                height: 60px;
+                font-size: 1.1rem;
+            }
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: particleFade 0.8s ease-out forwards;
+        }
+
+        @keyframes particleFade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <canvas class="game-canvas" id="gameCanvas"></canvas>
+            
+            <div class="ui-overlay">
+                <div class="score-box">
+                    <span class="score-label">النتيجة</span>
+                    <div class="score" id="score">0</div>
+                </div>
+                <div class="high-score-box">
+                    <span class="high-score-label">الأفضل</span>
+                    <div class="high-score" id="highScore">0</div>
+                </div>
+            </div>
+
+            <div class="start-screen" id="startScreen">
+                <div class="character-preview">
+                    <svg viewBox="0 0 60 80" fill="none">
+                        <!-- Shemagh (white headscarf) -->
+                        <ellipse cx="30" cy="8" rx="18" ry="8" fill="#f8f8f8"/>
+                        <ellipse cx="26" cy="7" rx="8" ry="5" fill="#eeeeee"/>
+                        <ellipse cx="34" cy="7" rx="8" ry="5" fill="#eeeeee"/>
+                        <!-- Shemagh drapes -->
+                        <path d="M12 12 L6 28 L14 30 L18 16 Z" fill="#f0f0f0"/>
+                        <path d="M48 12 L54 28 L46 30 L42 16 Z" fill="#f0f0f0"/>
+                        <!-- Headband/Agal (black cord) -->
+                        <rect x="14" y="4" width="32" height="5" rx="2" fill="#1a1a1a"/>
+                        <rect x="16" y="6" width="28" height="2" rx="1" fill="#333"/>
+                        <circle cx="16" cy="6.5" r="2.5" fill="#0a0a0a"/>
+                        <circle cx="44" cy="6.5" r="2.5" fill="#0a0a0a"/>
+                        <!-- Head -->
+                        <circle cx="30" cy="18" r="9" fill="#d4a574"/>
+                        <!-- Eyes -->
+                        <circle cx="27" cy="17" r="2" fill="#1a1a1a"/>
+                        <circle cx="33" cy="17" r="2" fill="#1a1a1a"/>
+                        <!-- Mustache -->
+                        <path d="M26 23 Q30 26 34 23" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+                        <!-- Dishdasha body -->
+                        <path d="M15 30 L10 75 L50 75 L45 30 Q30 25 15 30" fill="white"/>
+                        <path d="M15 30 L10 75" stroke="#ddd" stroke-width="1"/>
+                        <path d="M45 30 L50 75" stroke="#ddd" stroke-width="1"/>
+                        <!-- Collar -->
+                        <path d="M20 30 L30 38 L40 30" stroke="#ddd" stroke-width="2" fill="none"/>
+                        <!-- Belt/Tie -->
+                        <rect x="25" y="45" width="10" height="3" fill="#1a1a1a"/>
+                    </svg>
+                </div>
+                <h1 class="game-title">TWD Runner </h1>
+                <p class="game-subtitle">TWD IS THE BEST</p>
+                
+                <div class="controls-info">
+                    <div class="control-item">
+                        <div class="key-box">W</div>
+                        <span class="key-label">انقز</span>
+                    </div>
+                    <div class="control-item">
+                        <div class="key-box">S</div>
+                        <span class="key-label">دنق</span>
+                    </div>
+                </div>
+                
+                <button class="start-btn" id="startBtn">ابدأ اللعب</button>
+            </div>
+
+            <div class="game-over-screen hidden" id="gameOverScreen">
+                <h2 class="game-over-title"> YOU CAAAAAAN TWD  </h2>
+                <p class="final-score-text">نتيجتك: <span id="finalScore">0</span></p>
+                <p class="new-record hidden" id="newRecord">🎉 رقم قياسي جديد! 🎉</p>
+                <button class="restart-btn" id="restartBtn">العب مرة أخرى</button>
+            </div>
+        </div>
+
+        <div class="mobile-controls">
+            <button class="mobile-btn" id="duckBtn">
+                👇 <span>انحني</span>
+            </button>
+            <button class="mobile-btn" id="jumpBtn">
+                👆 <span>اقفز</span>
+            </button>
+        </div>
+        
+        <p class="mobile-hint">استخدم الأزرار أو المس الشاشة للعب</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('highScore');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const newRecordElement = document.getElementById('newRecord');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const jumpBtn = document.getElementById('jumpBtn');
+        const duckBtn = document.getElementById('duckBtn');
+
+        // Game State
+        let gameRunning = false;
+        let gameSpeed = 5;
+        let score = 0;
+        let highScore = localStorage.getItem('dishdashaRunnerHighScore') || 0;
+        let frameCount = 0;
+        let animationId;
+
+        // Canvas setup
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Display high score
+        highScoreElement.textContent = highScore;
+
+        // Player character (man in dishdasha)
+        const player = {
+            x: 50,
+            y: 0,
+            width: 35,
+            height: 65,
+            velocityY: 0,
+            grounded: true,
+            ducking: false,
+            jumpForce: -14,
+            gravity: 0.7,
+            groundY: 0,
+            runPhase: 0
+        };
+
+        // Obstacles
+        let obstacles = [];
+        let clouds = [];
+        let sandParticles = [];
+
+        // Initialize ground
+        function initGround() {
+            player.groundY = canvas.height - 90;
+            player.y = player.groundY - player.height;
+        }
+        initGround();
+        window.addEventListener('resize', initGround);
+
+        // Sand particles
+        function initSandParticles() {
+            sandParticles = [];
+            for (let i = 0; i < 40; i++) {
+                sandParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height - 80 + Math.random() * 30,
+                    size: Math.random() * 2 + 0.5,
+                    alpha: Math.random() * 0.4 + 0.1,
+                    speed: Math.random() * 0.4 + 0.1
+                });
+            }
+        }
+        initSandParticles();
+
+        // Obstacle class
+        class Obstacle {
+            constructor() {
+                this.width = 25 + Math.random() * 20;
+                this.height = 35 + Math.random() * 25;
+                this.x = canvas.width + this.width;
+                this.y = player.groundY - this.height;
+                this.type = Math.random() > 0.75 ? 'bird' : Math.random() > 0.5 ? 'rock' : 'cactus';
+                
+                if (this.type === 'bird') {
+                    this.y = player.groundY - 70 - Math.random() * 50;
+                    this.height = 25;
+                    this.width = 35;
+                } else if (this.type === 'rock') {
+                    this.height = 25 + Math.random() * 15;
+                    this.y = player.groundY - this.height;
+                }
+                
+                this.passed = false;
+            }
+
+            update() {
+                this.x -= gameSpeed;
+            }
+
+            draw() {
+                if (this.type === 'cactus') {
+                    // Desert cactus
+                    const gradient = ctx.createLinearGradient(this.x, this.y, this.x + this.width, this.y + this.height);
+                    gradient.addColorStop(0, '#2d6a4f');
+                    gradient.addColorStop(1, '#40916c');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.roundRect(this.x, this.y, this.width, this.height, 4);
+                    ctx.fill();
+                    
+                    // Cactus details
+                    ctx.strokeStyle = '#1b4332';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y);
+                    ctx.lineTo(this.x + this.width/2, this.y + this.height);
+                    ctx.stroke();
+                } else if (this.type === 'rock') {
+                    // Rock
+                    ctx.fillStyle = '#6b705c';
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + this.width/2, this.y + this.height/2, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#a5a58d';
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + this.width/2 - 3, this.y + this.height/2 - 3, this.width/4, this.height/4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Bird
+                    const gradient = ctx.createLinearGradient(this.x, this.y, this.x + this.width, this.y + this.height);
+                    gradient.addColorStop(0, '#e9c46a');
+                    gradient.addColorStop(1, '#f4a261');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + this.width/2, this.y + this.height/2, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Wing animation
+                    const wingY = this.y + this.height/2 + Math.sin(frameCount * 0.25) * 8;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + this.width/2, wingY, 6, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Cloud class
+        class Cloud {
+            constructor() {
+                this.x = canvas.width + 80;
+                this.y = Math.random() * (canvas.height * 0.35) + 15;
+                this.width = 50 + Math.random() * 30;
+                this.height = 20 + Math.random() * 12;
+                this.speed = 0.4 + Math.random() * 0.4;
+            }
+
+            update() {
+                this.x -= this.speed;
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(this.x - this.width/4, this.y + 4, this.width/3, this.height/2.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/4, this.y + 4, this.width/3, this.height/2.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Draw ground with desert sand
+        function drawGround() {
+            // Sand gradient
+            const gradient = ctx.createLinearGradient(0, player.groundY, 0, player.groundY + 90);
+            gradient.addColorStop(0, 'rgba(230, 200, 138, 0.25)');
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, player.groundY, canvas.width, 90);
+            
+            // Ground line
+            ctx.strokeStyle = 'rgba(230, 200, 138, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, player.groundY);
+            ctx.lineTo(canvas.width, player.groundY);
+            ctx.stroke();
+
+            // Sand particles
+            sandParticles.forEach(p => {
+                ctx.fillStyle = `rgba(230, 200, 138, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // Draw the man in dishdasha, shemagh and headband
+        function drawPlayer() {
+            ctx.save();
+            
+            const pX = player.x;
+            const pY = player.ducking ? player.y + 15 : player.y;
+            const pW = player.ducking ? player.width + 8 : player.width;
+            const pH = player.ducking ? player.height - 15 : player.height;
+
+            // Running animation
+            if (player.grounded && gameRunning) {
+                player.runPhase += 0.35;
+            }
+
+            // === SHEMAGH (traditional Saudi headscarf - white with red checkered pattern) ===
+            // Main shemagh cloth on head
+            ctx.fillStyle = '#f8f8f8';
+            ctx.beginPath();
+            ctx.ellipse(pX + pW/2, pY + 4, pW/2 + 5, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Shemagh folds
+            ctx.fillStyle = '#eeeeee';
+            ctx.beginPath();
+            ctx.ellipse(pX + pW/2 - 3, pY + 3, 5, 3.5, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(pX + pW/2 + 3, pY + 3, 5, 3.5, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Shemagh drape (hanging sides)
+            ctx.fillStyle = '#f0f0f0';
+            ctx.beginPath();
+            ctx.moveTo(pX + 3, pY + 6);
+            ctx.lineTo(pX - 2, pY + 20);
+            ctx.lineTo(pX + 6, pY + 22);
+            ctx.lineTo(pX + 10, pY + 10);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(pX + pW - 3, pY + 6);
+            ctx.lineTo(pX + pW + 2, pY + 20);
+            ctx.lineTo(pX + pW - 6, pY + 22);
+            ctx.lineTo(pX + pW - 10, pY + 10);
+            ctx.closePath();
+            ctx.fill();
+
+            // === HEADBAND/AQAL (black cord) ===
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.roundRect(pX + 2, pY + 1, pW - 4, 4, 2);
+            ctx.fill();
+            
+            // Headband detail line
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(pX + 4, pY + 2.5, pW - 8, 1);
+            
+            // Headband rings on sides
+            ctx.fillStyle = '#0a0a0a';
+            ctx.beginPath();
+            ctx.arc(pX + 3, pY + 3, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(pX + pW - 3, pY + 3, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // === HEAD (face) ===
+            ctx.fillStyle = '#d4a574';
+            ctx.beginPath();
+            ctx.arc(pX + pW/2, pY + 11, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // === EYES ===
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(pX + pW/2 - 2.5, pY + 10, 1.5, 0, Math.PI * 2);
+            ctx.arc(pX + pW/2 + 2.5, pY + 10, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye shine
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(pX + pW/2 - 2, pY + 9.5, 0.5, 0, Math.PI * 2);
+            ctx.arc(pX + pW/2 + 3, pY + 9.5, 0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // === MUSTACHE ===
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(pX + pW/2 - 3, pY + 15);
+            ctx.quadraticCurveTo(pX + pW/2, pY + 17, pX + pW/2 + 3, pY + 15);
+            ctx.stroke();
+
+            // === DISHDASHA (white robe) ===
+            const dressGradient = ctx.createLinearGradient(pX, pY + 15, pX + pW, pY + pH);
+            dressGradient.addColorStop(0, '#ffffff');
+            dressGradient.addColorStop(0.5, '#f5f5f5');
+            dressGradient.addColorStop(1, '#eeeeee');
+            
+            ctx.fillStyle = dressGradient;
+            ctx.beginPath();
+            ctx.moveTo(pX + 5, pY + 17);
+            ctx.lineTo(pX, pY + pH - 5);
+            ctx.lineTo(pX + pW, pY + pH - 5);
+            ctx.lineTo(pX + pW - 5, pY + 17);
+            ctx.quadraticCurveTo(pX + pW/2, pY + 14, pX + 5, pY + 17);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dishdasha border lines
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pX + 2, pY + 20);
+            ctx.lineTo(pX - 2, pY + pH - 5);
+            ctx.moveTo(pX + pW - 2, pY + 20);
+            ctx.lineTo(pX + pW + 2, pY + pH - 5);
+            ctx.stroke();
+
+            // Collar
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(pX + 8, pY + 18);
+            ctx.lineTo(pX + pW/2, pY + 24);
+            ctx.lineTo(pX + pW - 8, pY + 18);
+            ctx.stroke();
+
+            // Belt (simple black strip)
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(pX + pW/2 - 5, pY + 30, 10, 3);
+
+            // === LEGS (animated when running) ===
+            if (player.grounded && gameRunning) {
+                const legOffset1 = Math.sin(player.runPhase) * 5;
+                const legOffset2 = Math.sin(player.runPhase + Math.PI) * 5;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(pX + pW/2 - 8, pY + pH - 8, 6, 10 + legOffset1);
+                ctx.fillRect(pX + pW/2 + 2, pY + pH - 8, 6, 10 + legOffset2);
+            } else {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(pX + pW/2 - 8, pY + pH - 8, 6, 10);
+                ctx.fillRect(pX + pW/2 + 2, pY + pH - 8, 6, 10);
+            }
+
+            // Shoes
+            ctx.fillStyle = '#1a1a1a';
+            if (player.grounded && gameRunning) {
+                const legOffset1 = Math.sin(player.runPhase) * 5;
+                const legOffset2 = Math.sin(player.runPhase + Math.PI) * 5;
+                ctx.beginPath();
+                ctx.ellipse(pX + pW/2 - 5, pY + pH + 2 + legOffset1, 5, 3, 0, 0, Math.PI * 2);
+                ctx.ellipse(pX + pW/2 + 5, pY + pH + 2 + legOffset2, 5, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.ellipse(pX + pW/2 - 5, pY + pH + 2, 5, 3, 0, 0, Math.PI * 2);
+                ctx.ellipse(pX + pW/2 + 5, pY + pH + 2, 5, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Dark gradient sky
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGradient.addColorStop(0, '#1a1a2e');
+            bgGradient.addColorStop(0.5, '#16213e');
+            bgGradient.addColorStop(1, '#1f3a3a');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            for (let i = 0; i < 30; i++) {
+                const sx = (i * 137 + frameCount * 0.02) % canvas.width;
+                const sy = (i * 89) % (canvas.height * 0.4);
+                ctx.beginPath();
+                ctx.arc(sx, sy, 0.8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Moon
+            ctx.fillStyle = '#f5f5dc';
+            ctx.beginPath();
+            ctx.arc(canvas.width - 80, 50, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#1a1a2e';
+            ctx.beginPath();
+            ctx.arc(canvas.width - 70, 45, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Grid pattern
+            ctx.strokeStyle = 'rgba(0, 212, 170, 0.03)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw clouds
+            clouds.forEach(cloud => {
+                cloud.draw();
+            });
+        }
+
+        // Collision detection
+        function checkCollision(obstacle) {
+            const playerHitbox = {
+                x: player.x + 5,
+                y: player.ducking ? player.y + 15 : player.y + 5,
+                width: (player.ducking ? player.width + 8 : player.width) - 10,
+                height: (player.ducking ? player.height - 15 : player.height) - 8
+            };
+
+            return playerHitbox.x < obstacle.x + obstacle.width &&
+                   playerHitbox.x + playerHitbox.width > obstacle.x &&
+                   playerHitbox.y < obstacle.y + obstacle.height &&
+                   playerHitbox.y + playerHitbox.height > obstacle.y;
+        }
+
+        // Spawn obstacles
+        function spawnObstacle() {
+            const minGap = 350;
+            const lastObstacle = obstacles[obstacles.length - 1];
+            
+            if (!lastObstacle || (canvas.width - lastObstacle.x > minGap + Math.random() * 250)) {
+                obstacles.push(new Obstacle());
+            }
+        }
+
+        // Spawn clouds
+        function spawnCloud() {
+            if (Math.random() < 0.008 && clouds.length < 4) {
+                clouds.push(new Cloud());
+            }
+        }
+
+        // Update game
+        function update() {
+            if (!gameRunning) return;
+
+            frameCount++;
+
+            // Update score
+            if (frameCount % 5 === 0) {
+                score++;
+                scoreElement.textContent = score;
+                
+                // Increase speed
+                if (score % 80 === 0) {
+                    gameSpeed += 0.4;
+                }
+            }
+
+            // Jump physics
+            if (!player.grounded) {
+                player.velocityY += player.gravity;
+                player.y += player.velocityY;
+
+                if (player.y >= player.groundY - player.height + (player.ducking ? 15 : 0)) {
+                    player.y = player.groundY - player.height + (player.ducking ? 15 : 0);
+                    player.velocityY = 0;
+                    player.grounded = true;
+                }
+            }
+
+            // Spawn and update clouds
+            spawnCloud();
+            clouds = clouds.filter(cloud => cloud.x + cloud.width > 0);
+            clouds.forEach(cloud => cloud.update());
+
+            // Spawn and update obstacles
+            spawnObstacle();
+            obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
+            obstacles.forEach(obstacle => obstacle.update());
+
+            // Check collisions
+            for (let obstacle of obstacles) {
+                if (checkCollision(obstacle)) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            // Update sand particles
+            sandParticles.forEach(p => {
+                p.x -= p.speed;
+                if (p.x < 0) p.x = canvas.width;
+            });
+
+            // Draw everything
+            drawBackground();
+            drawGround();
+            obstacles.forEach(obstacle => obstacle.draw());
+            drawPlayer();
+
+            animationId = requestAnimationFrame(update);
+        }
+
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            
+            finalScoreElement.textContent = score;
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('dishdashaRunnerHighScore', highScore);
+                highScoreElement.textContent = highScore;
+                newRecordElement.classList.remove('hidden');
+            } else {
+                newRecordElement.classList.add('hidden');
+            }
+            
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // Start game
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            gameSpeed = 5;
+            frameCount = 0;
+            obstacles = [];
+            player.y = player.groundY - player.height;
+            player.velocityY = 0;
+            player.grounded = true;
+            player.ducking = false;
+            
+            scoreElement.textContent = '0';
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            
+            update();
+        }
+
+        // Jump
+        function jump() {
+            if (player.grounded && gameRunning) {
+                player.velocityY = player.jumpForce;
+                player.grounded = false;
+                createJumpParticles(player.x + player.width/2, player.y + player.height);
+            }
+        }
+
+        // Duck
+        function duck(active) {
+            if (gameRunning && player.grounded) {
+                player.ducking = active;
+                if (active) {
+                    player.y = player.groundY - player.height + 15;
+                } else {
+                    player.y = player.groundY - player.height;
+                }
+            }
+        }
+
+        // Particles on jump
+        function createJumpParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.width = (Math.random() * 8 + 4) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.background = `rgba(230, 200, 138, ${Math.random() * 0.5 + 0.5})`;
+                canvas.parentElement.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        // Event listeners - Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                e.preventDefault();
+                if (!gameRunning && !startScreen.classList.contains('hidden')) {
+                    startGame();
+                } else {
+                    jump();
+                }
+            }
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                e.preventDefault();
+                duck(true);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                duck(false);
+            }
+        });
+
+        // Event listeners - Buttons
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        // Touch controls
+        jumpBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jumpBtn.classList.add('active');
+            if (gameRunning) jump();
+        });
+        jumpBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            jumpBtn.classList.remove('active');
+        });
+        jumpBtn.addEventListener('click', () => {
+            if (gameRunning) jump();
+        });
+
+        duckBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            duckBtn.classList.add('active');
+            duck(true);
+        });
+        duckBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            duckBtn.classList.remove('active');
+            duck(false);
+        });
+        duckBtn.addEventListener('mousedown', () => duck(true));
+        duckBtn.addEventListener('mouseup', () => duck(false));
+        duckBtn.addEventListener('mouseleave', () => duck(false));
+
+        // Touch anywhere to jump (on canvas)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning) {
+                // Get touch position
+                const rect = canvas.getBoundingClientRect();
+                const touchY = e.touches[0].clientY - rect.top;
+                
+                // Upper half = jump, lower half = duck
+                if (touchY < rect.height / 2) {
+                    jump();
+                } else {
+                    duck(true);
+                }
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            duck(false);
+        });
+
+        // Initial draw
+        drawBackground();
+        drawGround();
+        drawPlayer();
+    </script>
+</body>
+</html>
+
